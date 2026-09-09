@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<html lang="id" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text Mining Lab - Pendidikan Teknologi Informasi</title>
+    
+    <!-- FAVICON LOGO UNESA -->
+    <link rel="icon" type="image/png" href="https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f4/State_University_of_Surabaya_logo.png/500px-State_University_of_Surabaya_logo.png">
+    
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Tailwind CSS & Chart.js -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['Courier New', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .log-container::-webkit-scrollbar { width: 6px; }
+        .log-container::-webkit-scrollbar-track { background: #0f172a; }
+        .log-container::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        
+        .sidebar-item.active {
+            background-color: #2563eb;
+            color: white;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 min-h-screen flex flex-col md:flex-row overflow-x-hidden">
+
+    <!-- MOBILE HEADER (Hanya Tampil di Layar Kecil) -->
+    <header class="md:hidden bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 p-4 flex items-center justify-between z-40 sticky top-0">
+        <div class="flex items-center gap-3">
+            <img src="https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f4/State_University_of_Surabaya_logo.png/500px-State_University_of_Surabaya_logo.png" alt="UNESA Logo" class="w-8 h-8 object-contain drop-shadow-md">
+            <h1 class="font-bold text-base leading-tight">Text Mining Lab</h1>
+        </div>
+        <button onclick="toggleSidebar()" class="text-slate-600 dark:text-slate-300 text-2xl p-1 focus:outline-none">
+            <i class="fas fa-bars"></i>
+        </button>
+    </header>
+
+    <!-- SIDEBAR OVERLAY FOR MOBILE -->
+    <div id="sidebarOverlay" onclick="toggleSidebar()" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40 hidden md:hidden fade-in"></div>
+
+    <!-- SIDEBAR -->
+    <aside id="mainSidebar" class="fixed md:relative top-0 left-0 h-full w-64 bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 flex flex-col justify-between flex-shrink-0 z-50 transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out shadow-2xl md:shadow-none">
+        <div>
+            <div class="p-5 flex items-center justify-between border-b border-slate-100 dark:border-slate-700">
+                <div class="flex items-center gap-3">
+                    <img src="https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f4/State_University_of_Surabaya_logo.png/500px-State_University_of_Surabaya_logo.png" alt="UNESA Logo" class="w-10 h-10 object-contain drop-shadow-md">
+                    <div>
+                        <h1 class="font-bold text-base leading-tight">Text Mining Lab</h1>
+                        <p class="text-xs text-slate-400">Pendidikan TI</p>
+                    </div>
+                </div>
+                <!-- Close Button on Mobile -->
+                <button onclick="toggleSidebar()" class="md:hidden text-slate-400 hover:text-slate-600 text-lg">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <nav class="p-4 space-y-2">
+                <button onclick="switchTab('dashboard')" id="nav-dashboard" class="sidebar-item active w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium hover:bg-slate-100 dark:hover:bg-slate-700/50 transition">
+                    <i class="fas fa-chart-pie w-5 text-center"></i>
+                    <span>Dashboard</span>
+                </button>
+
+                <button onclick="switchTab('preprocessing')" id="nav-preprocessing" class="sidebar-item w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium hover:bg-slate-100 dark:hover:bg-slate-700/50 transition">
+                    <i class="fas fa-cogs w-5 text-center"></i>
+                    <span>Pre-processing</span>
+                </button>
+
+                <button onclick="switchTab('history')" id="nav-history" class="sidebar-item w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium hover:bg-slate-100 dark:hover:bg-slate-700/50 transition">
+                    <i class="fas fa-database w-5 text-center"></i>
+                    <span>File History & Dataset</span>
+                </button>
+            </nav>
+        </div>
+
+        <div class="p-4 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between">
+            <span class="text-xs text-slate-400">Mode Tampilan</span>
+            <button id="themeToggle" class="p-2 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 transition" title="Ganti Tema">
+                <i class="fas fa-moon"></i>
+            </button>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="flex-1 w-full md:w-auto h-screen overflow-y-auto p-4 md:p-8">
+
+        <!-- PAGE 1: DASHBOARD -->
+        <section id="page-dashboard" class="space-y-8 fade-in">
+            <header>
+                <h2 class="text-2xl md:text-3xl font-bold">Dashboard Analisis</h2>
+                <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">Statistik pemrosesan teks dan metrik performa secara realtime.</p>
+            </header>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
+                <!-- CARD 1: Teks Diproses -->
+                <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 flex items-center gap-4 hover:shadow-md transition">
+                    <div class="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-400 flex items-center justify-center text-xl flex-shrink-0">
+                        <i class="fas fa-file-alt"></i>
+                    </div>
+                    <div>
+                        <p class="text-[11px] md:text-xs text-slate-400 font-semibold uppercase tracking-wider">Teks Diproses</p>
+                        <h3 class="text-xl md:text-2xl font-bold mt-1 text-slate-800 dark:text-white" id="dashTotalProcessed">0</h3>
+                    </div>
+                </div>
+
+                <!-- CARD 2: Total Kata Ekstrak (NEW) -->
+                <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 flex items-center gap-4 hover:shadow-md transition">
+                    <div class="w-12 h-12 rounded-xl bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400 flex items-center justify-center text-xl flex-shrink-0">
+                        <i class="fas fa-cubes"></i>
+                    </div>
+                    <div>
+                        <p class="text-[11px] md:text-xs text-slate-400 font-semibold uppercase tracking-wider">Total Kata Ekstrak</p>
+                        <h3 class="text-xl md:text-2xl font-bold mt-1 text-slate-800 dark:text-white" id="dashTotalTokens">0</h3>
+                    </div>
+                </div>
+
+                <!-- CARD 3: Stopword Dihapus (NEW) -->
+                <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 flex items-center gap-4 hover:shadow-md transition">
+                    <div class="w-12 h-12 rounded-xl bg-purple-100 text-purple-600 dark:bg-purple-900/40 dark:text-purple-400 flex items-center justify-center text-xl flex-shrink-0">
+                        <i class="fas fa-eraser"></i>
+                    </div>
+                    <div>
+                        <p class="text-[11px] md:text-xs text-slate-400 font-semibold uppercase tracking-wider">Stopword Dihapus</p>
+                        <h3 class="text-xl md:text-2xl font-bold mt-1 text-slate-800 dark:text-white" id="dashTotalStopwords">0</h3>
+                    </div>
+                </div>
+
+                <!-- CARD 4: Rata-rata Waktu -->
+                <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 flex items-center gap-4 hover:shadow-md transition">
+                    <div class="w-12 h-12 rounded-xl bg-amber-100 text-amber-600 dark:bg-amber-900/40 dark:text-amber-400 flex items-center justify-center text-xl flex-shrink-0">
+                        <i class="fas fa-bolt"></i>
+                    </div>
+                    <div>
+                        <p class="text-[11px] md:text-xs text-slate-400 font-semibold uppercase tracking-wider">Rata-rata Waktu</p>
+                        <h3 class="text-xl md:text-2xl font-bold mt-1 text-slate-800 dark:text-white" id="dashAvgTime">0.00s</h3>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="lg:col-span-2 bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
+                    <h3 class="font-bold text-lg mb-4 flex items-center gap-2"><i class="fas fa-chart-line text-blue-500"></i> Tren Produksi Token Bersih</h3>
+                    <div class="h-64 w-full relative"><canvas id="visitChart"></canvas></div>
+                </div>
+                <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
+                    <h3 class="font-bold text-lg mb-4 flex items-center gap-2"><i class="fas fa-chart-pie text-purple-500"></i> Rasio Filter Teks</h3>
+                    <div class="h-64 w-full relative flex items-center justify-center"><canvas id="ratioChart"></canvas></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PAGE 2: PRE-PROCESSING -->
+        <section id="page-preprocessing" class="space-y-6 hidden fade-in">
+            <header>
+                <h2 class="text-2xl md:text-3xl font-bold">Text Pre-processing</h2>
+                <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">Uji coba algoritma text-mining bahasa Indonesia secara interaktif.</p>
+            </header>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- Input Box -->
+                <div class="lg:col-span-7 bg-white dark:bg-slate-800 rounded-2xl p-5 md:p-6 shadow-sm border border-slate-200 dark:border-slate-700 flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-center mb-3">
+                            <label for="inputText" class="font-bold text-sm">Masukkan Teks Mentah</label>
+                            <span id="textStats" class="text-xs font-mono text-slate-400 bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded">0 Karakter | 0 Kata</span>
+                        </div>
+                        
+                        <textarea id="inputText" rows="6" 
+                            class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 focus:ring-2 focus:ring-blue-500 outline-none text-sm transition"
+                            placeholder="Ketik atau tempel teks mentah di sini..."></textarea>
+                        
+                        <!-- File Upload Section -->
+                        <div class="mt-3 flex flex-col sm:flex-row sm:items-center justify-between bg-slate-50 dark:bg-slate-900/60 p-3 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 gap-3">
+                            <div class="flex items-center gap-2 text-xs text-slate-500 font-medium">
+                                <i class="fas fa-file-upload text-blue-500 text-base"></i>
+                                <span>Unggah file teks (.txt):</span>
+                            </div>
+                            <input type="file" id="fileInput" accept=".txt" class="w-full sm:w-auto text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200 dark:file:bg-slate-700 dark:file:text-slate-300 transition cursor-pointer">
+                        </div>
+
+                        <!-- Data Uji Quick Buttons -->
+                        <div class="mt-4">
+                            <p class="text-xs text-slate-400 mb-2 font-medium">Coba gunakan Data Uji:</p>
+                            <div class="flex flex-wrap gap-2" id="sampleButtonsContainer"></div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 flex flex-col sm:flex-row gap-3">
+                        <button onclick="runPreprocessing()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-xl transition flex items-center justify-center gap-2 text-sm shadow-md shadow-blue-500/20 active:scale-[0.98]">
+                            <i class="fas fa-play"></i> Mulai Proses Teks
+                        </button>
+                        <button onclick="resetPreprocessing()" class="w-full sm:w-auto bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-medium py-3 px-6 rounded-xl transition text-sm active:scale-[0.98]">
+                            <i class="fas fa-undo"></i> Reset
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Processing Log Terminal -->
+                <div class="lg:col-span-5 bg-slate-900 text-slate-200 rounded-2xl shadow-sm border border-slate-800 flex flex-col h-[400px] lg:h-auto overflow-hidden">
+                    <div class="p-3 border-b border-slate-800 flex justify-between items-center bg-slate-950/80">
+                        <span class="text-xs font-mono font-bold text-slate-400"><i class="fas fa-terminal text-blue-400 mr-2"></i> Sistem Log</span>
+                        <button onclick="clearLogTerminal()" class="text-[10px] bg-slate-800 hover:bg-slate-700 px-2 py-1 rounded text-slate-300 transition">Bersihkan</button>
+                    </div>
+                    <div id="logTerminal" class="p-4 font-mono text-xs space-y-2 overflow-y-auto flex-1 log-container leading-relaxed">
+                        <div class="text-slate-500 italic">> Menunggu input data...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RESULT SUMMARY CARDS -->
+            <div id="statsSummaryBar" class="hidden grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 fade-in">
+                <!-- Cards generated via JS logic inside the block below -->
+            </div>
+
+            <!-- STEP BY STEP PROCESS DISPLAY -->
+            <div id="stepsDisplayContainer" class="space-y-4 md:space-y-6"></div>
+
+            <!-- FINAL RESULT SECTION -->
+            <div id="finalResultBox" class="hidden bg-white dark:bg-slate-800 rounded-2xl p-5 md:p-6 border border-slate-200 dark:border-slate-700 shadow-sm space-y-4 fade-in">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-4 gap-3">
+                    <h3 class="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2"><i class="fas fa-check-circle text-emerald-500"></i> Hasil Akhir Pemrosesan</h3>
+                    <button onclick="copyToClipboard()" class="w-full sm:w-auto text-xs bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-800 font-medium px-4 py-2 rounded-lg transition flex items-center justify-center gap-2">
+                        <i class="fas fa-copy"></i> Salin Teks Bersih
+                    </button>
+                </div>
+                
+                <div>
+                    <span class="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-wider">Original Text</span>
+                    <p class="mt-1 p-3 md:p-4 bg-slate-50 dark:bg-slate-900 rounded-xl text-xs md:text-sm text-slate-600 dark:text-slate-300 font-mono leading-relaxed break-words" id="outOriginalText">-</p>
+                </div>
+                <div>
+                    <span class="text-[10px] md:text-xs font-bold text-emerald-500 uppercase tracking-wider">Cleaned & Stemmed Text</span>
+                    <p class="mt-1 p-3 md:p-4 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-800 dark:text-emerald-300 rounded-xl text-xs md:text-sm font-mono leading-relaxed font-semibold border border-emerald-200 dark:border-emerald-800 break-words" id="outCleanedText">-</p>
+                </div>
+                <div>
+                    <span class="text-[10px] md:text-xs font-bold text-blue-500 uppercase tracking-wider">Final Tokens Array</span>
+                    <div class="mt-2 flex flex-wrap gap-1.5 md:gap-2" id="outFinalTokensContainer"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PAGE 3: FILE HISTORY & DATASET -->
+        <section id="page-history" class="space-y-6 hidden fade-in">
+            <header class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-2xl md:text-3xl font-bold">Riwayat & Dataset</h2>
+                    <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">Kelola dan ekspor data teks yang telah berhasil diproses.</p>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                    <button onclick="exportDataset('csv')" class="text-xs bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl transition font-medium flex items-center gap-2 shadow-sm active:scale-95">
+                        <i class="fas fa-file-csv"></i> Ekspor CSV
+                    </button>
+                    <button onclick="exportDataset('json')" class="text-xs bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl transition font-medium flex items-center gap-2 shadow-sm active:scale-95">
+                        <i class="fas fa-file-code"></i> Ekspor JSON
+                    </button>
+                    <button onclick="clearHistoryTable()" class="text-xs bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-400 px-4 py-2.5 rounded-xl transition font-medium flex items-center gap-2 active:scale-95">
+                        <i class="fas fa-trash-alt"></i> Bersihkan Riwayat
+                    </button>
+                </div>
+            </header>
+
+            <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm min-w-[700px]">
+                        <thead class="bg-slate-50 dark:bg-slate-700/50 text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700">
+                            <tr>
+                                <th class="p-4 font-semibold w-16 text-center">No</th>
+                                <th class="p-4 font-semibold w-24">Waktu</th>
+                                <th class="p-4 font-semibold">Teks Mentah</th>
+                                <th class="p-4 font-semibold">Hasil Bersih (Cleaned)</th>
+                                <th class="p-4 font-semibold text-center w-20">Token</th>
+                                <th class="p-4 font-semibold text-center w-40">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyTableBody" class="divide-y divide-slate-100 dark:divide-slate-700/50"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- MODAL DETAIL LIHAT DATASET -->
+    <div id="detailModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4 fade-in">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 max-w-3xl w-full p-6 space-y-5 max-h-[90vh] overflow-y-auto shadow-2xl">
+            <div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-700 pb-4">
+                <div class="flex items-center gap-2 text-slate-800 dark:text-white">
+                    <div class="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/50 text-blue-600 flex items-center justify-center">
+                        <i class="fas fa-file-alt text-sm"></i>
+                    </div>
+                    <h3 class="font-bold text-lg">Detail Breakdown Teks</h3>
+                </div>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xl font-bold transition w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-slate-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div id="modalContent" class="space-y-5 text-xs md:text-sm">
+                <!-- Content injected dynamically via JS -->
+            </div>
+
+            <div class="pt-4 border-t border-slate-100 dark:border-slate-700 flex justify-end">
+                <button onclick="closeModal()" class="px-5 py-2.5 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-xl font-medium text-sm transition">Tutup Detail</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPT APPLICATION -->
+    <script>
+        // 5 DATA SAMPEL UNTUK TOMBOL QUICK TEST
+        const sampleData = [
+            "Pemerintah terus mendorong literasi digital bagi masyarakat guna menangkal penyebaran berita bohong atau hoaks di platform jaringan jejaring sosial.",
+            "Mahasiswa Universitas Negeri Surabaya (UNESA) sedang melakukan riset mendalam terkait pemrosesan bahasa alami (Natural Language Processing) untuk menganalisis opini publik.",
+            "Teknologi Text Mining memungkinkan analisis data berupa kumpulan teks yang berukuran sangat besar secara cepat, akurat, dan otomatis pada tahun ini.",
+            "Penerapan kecerdasan buatan dalam bidang pendidikan teknologi informasi sangat membantu pengajar untuk mengevaluasi kemampuan siswa secara komprehensif.",
+            "Pengembangan sistem informasi berbasis web memerlukan pemahaman mendalam tentang desain antarmuka pengguna serta pengalaman yang interaktif dan responsif."
+        ];
+
+        // STOPWORDS INDONESIA LIST
+        const indonesianStopwords = new Set([
+            "yang", "dan", "di", "ke", "dari", "dengan", "untuk", "pada", "adalah", 
+            "ini", "itu", "saya", "kami", "kita", "anda", "dia", "mereka", "dalam", 
+            "akan", "telah", "sudah", "tidak", "ada", "dapat", "bisa", "sebagai", 
+            "oleh", "atau", "juga", "karena", "agar", "lebih", "sangat", "sebuah", 
+            "para", "tentang", "tersebut", "sedang", "namun", "atas", "terhadap", "bagi", "guna", "serta"
+        ]);
+
+        // KAMUS PENGECUALIAN & KATA UMUM
+        const commonExceptions = {
+            "pemerintah": "perintah", "pemerintahan": "perintah",
+            "mengerti": "erti", "belajar": "ajar", "pelajar": "ajar",
+            "bekerja": "kerja", "pekerja": "kerja", "memahami": "paham",
+            "mempengaruhi": "pengaruh", "menganalisis": "analisis",
+            "jejaring": "jaring", "berita": "berita", "literasi": "literasi",
+            "digital": "digital", "sektor": "sektor", "otomatis": "otomatis",
+            "akurat": "akurat", "komprehensif": "komprehensif", "interaktif": "interaktif",
+            "responsif": "responsif", "opini": "opini", "publik": "publik",
+            "hoaks": "hoaks", "platform": "platform", "teknologi": "teknologi",
+            "informasi": "informasi", "kemampuan": "mampu", "evaluasi": "evaluasi",
+            "antarmuka": "antarmuka", "memungkinkan": "mungkin", "berupa": "rupa",
+            "mendorong": "dorong", "menangkal": "tangkal", "penyebaran": "sebar",
+            "pemrosesan": "proses", "pendidikan": "didik", "pengajar": "ajar",
+            "pengalaman": "alam", "berbasis": "basis", "pengembangan": "kembang"
+        };
+
+        // STEMMING SEDERHANA INDONESIA DENGAN FILTER PENGECUALIAN
+        function stemIndonesianWord(word) {
+            let original = word;
+            let root = word;
+            
+            // 1. Cek di kamus pengecualian terlebih dahulu (Sebelum pemotongan)
+            if (commonExceptions[original]) {
+                return { original, root: commonExceptions[original] };
+            }
+            
+            // 2. Hapus Akhiran (Suffixes)
+            root = root.replace(/(lah|kah|tah|pun|nya|ku|mu)$/g, '');
+            root = root.replace(/(kan|an|i)$/g, '');
+            
+            // 3. Hapus Awalan (Prefixes) secara sederhana
+            root = root.replace(/^(meng|meny|mem|men|me|peng|peny|pem|pen|pe|ber|ter|di|ke|se)/g, '');
+            
+            // 4. Cegah kata menjadi terlalu pendek akibat stemming yang terlalu agresif
+            if (root.length < 3) root = original; 
+            
+            // 5. Cek ulang dengan kamus jika hasil pemotongan ternyata keliru (Setelah pemotongan)
+            if (commonExceptions[root]) {
+                root = commonExceptions[root];
+            }
+
+            return { original, root };
+        }
+
+        // REAL-TIME LOCAL STORAGE & CHART INSTANCES (Mempertahankan Data Lama)
+        let historyData = JSON.parse(localStorage.getItem('textMiningHistory')) || [];
+        let visitChartInstance = null;
+        let ratioChartInstance = null;
+
+        // DOM ELEMENTS
+        const elInputText = document.getElementById('inputText');
+        const elFileInput = document.getElementById('fileInput');
+        const elTextStats = document.getElementById('textStats');
+        const elLogTerminal = document.getElementById('logTerminal');
+        const elStepsDisplayContainer = document.getElementById('stepsDisplayContainer');
+        const elSidebar = document.getElementById('mainSidebar');
+        const elOverlay = document.getElementById('sidebarOverlay');
+
+        // TOGGLE MOBILE SIDEBAR
+        function toggleSidebar() {
+            elSidebar.classList.toggle('-translate-x-full');
+            elOverlay.classList.toggle('hidden');
+        }
+
+        // SWITCH TAB
+        function switchTab(tabName) {
+            document.querySelectorAll('main > section').forEach(sec => sec.classList.add('hidden'));
+            document.querySelectorAll('.sidebar-item').forEach(btn => btn.classList.remove('active'));
+
+            document.getElementById(`page-${tabName}`).classList.remove('hidden');
+            document.getElementById(`nav-${tabName}`).classList.add('active');
+
+            if (tabName === 'history') renderHistoryTable();
+            if (tabName === 'dashboard') updateDashboardStats();
+
+            // Auto close sidebar on mobile after clicking tab
+            if (window.innerWidth < 768 && !elSidebar.classList.contains('-translate-x-full')) {
+                toggleSidebar();
+            }
+        }
+
+        // REALTIME TEXT STATS COUNTER
+        elInputText.addEventListener('input', () => {
+            const val = elInputText.value;
+            const charCount = val.length;
+            const wordCount = val.trim() ? val.trim().split(/\s+/).length : 0;
+            elTextStats.innerText = `${charCount} Karakter | ${wordCount} Kata`;
+        });
+
+        // FILE UPLOAD READER (.TXT)
+        elFileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (evt) => {
+                elInputText.value = evt.target.result;
+                elInputText.dispatchEvent(new Event('input'));
+                writeLog('FILE', `File "${file.name}" berhasil diunggah.`, 'SUCCESS');
+                showToast(`File "${file.name}" berhasil dimuat!`, 'success');
+            };
+            reader.readAsText(file);
+        });
+
+        // RENDER SAMPLE BUTTONS (Data Uji 1 - 5)
+        const elSampleContainer = document.getElementById('sampleButtonsContainer');
+        sampleData.forEach((sample, idx) => {
+            const btn = document.createElement('button');
+            btn.className = "text-xs font-medium bg-slate-100 dark:bg-slate-700/80 text-slate-700 dark:text-slate-300 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 px-3 py-2 rounded-lg transition border border-slate-200 dark:border-slate-600 shadow-sm active:scale-95";
+            btn.innerText = `Data Uji ${idx + 1}`;
+            btn.onclick = () => {
+                elInputText.value = sample;
+                elInputText.dispatchEvent(new Event('input'));
+                writeLog('INPUT', `Data Uji ${idx + 1} dimuat ke form.`, 'INPUT');
+            };
+            elSampleContainer.appendChild(btn);
+        });
+
+        // LOG TERMINAL HELPER
+        function writeLog(tag, message, status = 'PROCESS') {
+            const now = new Date();
+            const timeStr = `${String(now.getHours()).padStart(2,'0')}.${String(now.getMinutes()).padStart(2,'0')}.${String(now.getSeconds()).padStart(2,'0')}`;
+            
+            let statusColor = 'text-blue-400';
+            if (status === 'SUCCESS') statusColor = 'text-green-400';
+            if (status === 'INPUT') statusColor = 'text-yellow-400';
+            if (status === 'ERROR') statusColor = 'text-red-400';
+
+            const logItem = `
+                <div class="flex gap-2">
+                    <span class="text-slate-500 whitespace-nowrap">[${timeStr}]</span>
+                    <span class="${statusColor} font-bold whitespace-nowrap">[${tag}]</span>
+                    <span class="text-slate-300 break-words">${message}</span>
+                </div>
+            `;
+            if (elLogTerminal.innerText.includes('Menunggu input')) elLogTerminal.innerHTML = '';
+            elLogTerminal.insertAdjacentHTML('beforeend', logItem);
+            elLogTerminal.scrollTop = elLogTerminal.scrollHeight;
+        }
+
+        function clearLogTerminal() {
+            elLogTerminal.innerHTML = '<div class="text-slate-500 italic">> Menunggu input data...</div>';
+        }
+
+        // PREPROCESSING MAIN EXECUTION
+        function runPreprocessing() {
+            const text = elInputText.value.trim();
+            if (!text) {
+                showToast('Silakan masukkan teks atau pilih Data Uji terlebih dahulu.', 'error');
+                return;
+            }
+
+            const startTime = performance.now();
+            clearLogTerminal();
+            writeLog('INPUT', 'Memulai pemrosesan teks...', 'INPUT');
+
+            // 1. CASE FOLDING
+            writeLog('PROCESS', 'Tahap 1: Menjalankan Case Folding...', 'PROCESS');
+            const caseFolded = text.toLowerCase();
+            writeLog('SUCCESS', 'Berhasil mengubah huruf menjadi lowercase.', 'SUCCESS');
+
+            // 2. CLEANING
+            writeLog('PROCESS', 'Tahap 2: Menjalankan Cleaning...', 'PROCESS');
+            const cleaned = caseFolded.replace(/https?:\/\/\S+/g, ' ') 
+                                      .replace(/[^a-z\s]/g, ' ')       
+                                      .replace(/\s+/g, ' ')            
+                                      .trim();
+            writeLog('SUCCESS', 'Berhasil menghapus tanda baca, simbol, dan angka.', 'SUCCESS');
+
+            // 3. TOKENIZATION
+            writeLog('PROCESS', 'Tahap 3: Menjalankan Tokenization...', 'PROCESS');
+            const rawTokens = cleaned.split(' ').filter(Boolean);
+            writeLog('SUCCESS', `Teks dipecah menjadi ${rawTokens.length} token.`, 'SUCCESS');
+
+            // 4. STOPWORD REMOVAL
+            writeLog('PROCESS', 'Tahap 4: Memeriksa dan Menghapus Stopwords...', 'PROCESS');
+            const removedStopwordsList = [];
+            const filteredTokens = [];
+
+            rawTokens.forEach(token => {
+                if (indonesianStopwords.has(token)) {
+                    removedStopwordsList.push(token);
+                } else {
+                    filteredTokens.push(token);
+                }
+            });
+            writeLog('SUCCESS', `${removedStopwordsList.length} stopword ditemukan dan dihapus.`, 'SUCCESS');
+
+            // 5. STEMMING
+            writeLog('PROCESS', 'Tahap 5: Menjalankan Stemming (Mencari Kata Dasar)...', 'PROCESS');
+            const stemMap = [];
+            const finalTokens = [];
+
+            filteredTokens.forEach(token => {
+                const res = stemIndonesianWord(token);
+                if (res.original !== res.root) {
+                    stemMap.push(res);
+                }
+                finalTokens.push(res.root);
+            });
+            writeLog('SUCCESS', `${stemMap.length} kata dikonversi ke bentuk dasar.`, 'SUCCESS');
+            
+            const endTime = performance.now();
+            const execTime = ((endTime - startTime) / 1000).toFixed(3);
+            writeLog('SUCCESS', `Preprocessing SELESAI dalam waktu ${execTime} detik.`, 'SUCCESS');
+
+            // UPDATE STATS CARDS
+            document.getElementById('statsSummaryBar').innerHTML = `
+                <div class="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 text-center shadow-sm">
+                    <span class="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-wide">ORIGINAL</span>
+                    <h4 class="text-xl md:text-2xl font-bold text-slate-800 dark:text-slate-100 mt-1">${text.length}</h4>
+                    <span class="text-[10px] text-slate-400">Karakter</span>
+                </div>
+                <div class="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 text-center shadow-sm">
+                    <span class="text-[10px] md:text-xs font-bold text-blue-500 uppercase tracking-wide">TOKENS</span>
+                    <h4 class="text-xl md:text-2xl font-bold text-blue-600 dark:text-blue-400 mt-1">${rawTokens.length}</h4>
+                    <span class="text-[10px] text-slate-400">Kata Utuh</span>
+                </div>
+                <div class="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 text-center shadow-sm">
+                    <span class="text-[10px] md:text-xs font-bold text-red-500 uppercase tracking-wide">STOPWORDS</span>
+                    <h4 class="text-xl md:text-2xl font-bold text-red-500 mt-1">${removedStopwordsList.length}</h4>
+                    <span class="text-[10px] text-slate-400">Dihapus</span>
+                </div>
+                <div class="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 text-center shadow-sm">
+                    <span class="text-[10px] md:text-xs font-bold text-emerald-500 uppercase tracking-wide">FINAL WORDS</span>
+                    <h4 class="text-xl md:text-2xl font-bold text-emerald-500 mt-1">${finalTokens.length}</h4>
+                    <span class="text-[10px] text-slate-400">Kata Dasar</span>
+                </div>
+            `;
+            document.getElementById('statsSummaryBar').classList.remove('hidden');
+
+            // RENDER INTERACTIVE STEP BREAKDOWN CARDS
+            renderStepCards({ original: text, caseFolded, cleaned, rawTokens, removedStopwordsList, filteredTokens, stemMap, finalTokens });
+
+            // RENDER FINAL RESULT BOX
+            document.getElementById('outOriginalText').innerText = text;
+            document.getElementById('outCleanedText').innerText = finalTokens.join(' ');
+            
+            const tokensContainer = document.getElementById('outFinalTokensContainer');
+            tokensContainer.innerHTML = '';
+            finalTokens.forEach(tok => {
+                tokensContainer.innerHTML += `<span class="px-2 py-1 bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded text-xs font-mono font-medium shadow-sm">[${tok}]</span>`;
+            });
+            document.getElementById('finalResultBox').classList.remove('hidden');
+
+            // SAVE TO HISTORY & LOCAL STORAGE
+            const now = new Date();
+            const timeStr = `${String(now.getHours()).padStart(2,'0')}.${String(now.getMinutes()).padStart(2,'0')}.${String(now.getSeconds()).padStart(2,'0')}`;
+            
+            historyData.unshift({
+                id: Date.now(),
+                time: timeStr,
+                execTime: execTime,
+                original: text,
+                caseFolded,
+                cleaned,
+                rawTokens,
+                stopwordsRemoved: removedStopwordsList,
+                cleanedText: finalTokens.join(' '),
+                finalTokens,
+                tokensCount: finalTokens.length
+            });
+            
+            localStorage.setItem('textMiningHistory', JSON.stringify(historyData));
+            updateDashboardStats(); // Update dashboard real-time!
+            showToast('Pemrosesan teks berhasil!', 'success');
+        }
+
+        // RENDER STEP CARDS
+        function renderStepCards(data) {
+            elStepsDisplayContainer.innerHTML = `
+                <!-- TAHAP 01: CASE FOLDING -->
+                <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 md:p-6 border border-slate-200 dark:border-slate-700 shadow-sm space-y-4">
+                    <div class="flex items-center gap-3 border-b border-slate-100 dark:border-slate-700 pb-3">
+                        <span class="w-8 h-8 rounded-lg bg-blue-600 text-white font-bold flex items-center justify-center text-xs shadow-md">01</span>
+                        <div>
+                            <h4 class="font-bold text-sm md:text-base">Case Folding</h4>
+                            <p class="text-[11px] md:text-xs text-slate-400 mt-0.5">Mengubah seluruh huruf teks menjadi huruf kecil (lowercase).</p>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs md:text-sm">
+                        <div class="p-3 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-700">
+                            <span class="font-bold text-[10px] md:text-xs text-slate-400 block mb-2 tracking-wider">TEKS SEBELUM</span>
+                            <p class="font-mono leading-relaxed break-words">${data.original}</p>
+                        </div>
+                        <div class="p-3 bg-blue-50/50 dark:bg-blue-900/10 rounded-xl border border-blue-100 dark:border-blue-800">
+                            <span class="font-bold text-[10px] md:text-xs text-blue-500 block mb-2 tracking-wider">TEKS SESUDAH</span>
+                            <p class="font-mono leading-relaxed break-words text-blue-900 dark:text-blue-200">${data.caseFolded}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAHAP 02: CLEANING -->
+                <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 md:p-6 border border-slate-200 dark:border-slate-700 shadow-sm space-y-4">
+                    <div class="flex items-center gap-3 border-b border-slate-100 dark:border-slate-700 pb-3">
+                        <span class="w-8 h-8 rounded-lg bg-blue-600 text-white font-bold flex items-center justify-center text-xs shadow-md">02</span>
+                        <div>
+                            <h4 class="font-bold text-sm md:text-base">Cleaning</h4>
+                            <p class="text-[11px] md:text-xs text-slate-400 mt-0.5">Menghapus angka, tanda baca, simbol, dan tautan URL.</p>
+                        </div>
+                    </div>
+                    <div class="p-3 bg-slate-50 dark:bg-slate-900 rounded-xl text-xs md:text-sm font-mono leading-relaxed border border-slate-100 dark:border-slate-700 break-words">
+                        <span class="font-bold text-[10px] md:text-xs text-slate-400 block mb-2 tracking-wider">HASIL CLEANING</span>
+                        <p>${data.cleaned}</p>
+                    </div>
+                </div>
+
+                <!-- TAHAP 03: TOKENIZATION -->
+                <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 md:p-6 border border-slate-200 dark:border-slate-700 shadow-sm space-y-4">
+                    <div class="flex items-center gap-3 border-b border-slate-100 dark:border-slate-700 pb-3">
+                        <span class="w-8 h-8 rounded-lg bg-blue-600 text-white font-bold flex items-center justify-center text-xs shadow-md">03</span>
+                        <div>
+                            <h4 class="font-bold text-sm md:text-base">Tokenization</h4>
+                            <p class="text-[11px] md:text-xs text-slate-400 mt-0.5">Memecah teks kalimat menjadi token/kata (Total: ${data.rawTokens.length} token).</p>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap gap-1.5 md:gap-2 p-3 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-700">
+                        ${data.rawTokens.map(t => `<span class="px-2 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-[11px] md:text-xs font-mono font-medium rounded shadow-sm">[${t}]</span>`).join('')}
+                    </div>
+                </div>
+
+                <!-- TAHAP 04: STOPWORD REMOVAL -->
+                <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 md:p-6 border border-slate-200 dark:border-slate-700 shadow-sm space-y-4">
+                    <div class="flex items-center gap-3 border-b border-slate-100 dark:border-slate-700 pb-3">
+                        <span class="w-8 h-8 rounded-lg bg-blue-600 text-white font-bold flex items-center justify-center text-xs shadow-md">04</span>
+                        <div>
+                            <h4 class="font-bold text-sm md:text-base">Stopword Removal</h4>
+                            <p class="text-[11px] md:text-xs text-slate-400 mt-0.5">Menghapus kata-kata hubung yang terlalu umum (stopword).</p>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs md:text-sm">
+                        <div class="p-3 md:p-4 bg-red-50/50 dark:bg-red-900/10 rounded-xl border border-red-100 dark:border-red-900/30">
+                            <span class="font-bold text-[10px] md:text-xs text-red-500 block mb-3 tracking-wider">STOPWORD DIHAPUS (${data.removedStopwordsList.length})</span>
+                            <div class="flex flex-wrap gap-1.5">
+                                ${data.removedStopwordsList.map(s => `<span class="line-through px-2 py-1 bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-300 rounded font-mono font-medium text-[11px] shadow-sm">[${s}]</span>`).join('')}
+                            </div>
+                        </div>
+                        <div class="p-3 md:p-4 bg-emerald-50/50 dark:bg-emerald-900/10 rounded-xl border border-emerald-100 dark:border-emerald-900/30">
+                            <span class="font-bold text-[10px] md:text-xs text-emerald-500 block mb-3 tracking-wider">TOKEN TERSISA (${data.filteredTokens.length})</span>
+                            <div class="flex flex-wrap gap-1.5">
+                                ${data.filteredTokens.map(f => `<span class="px-2 py-1 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 rounded font-mono font-medium text-[11px] shadow-sm">[${f}]</span>`).join('')}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAHAP 05: STEMMING -->
+                <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 md:p-6 border border-slate-200 dark:border-slate-700 shadow-sm space-y-4">
+                    <div class="flex items-center gap-3 border-b border-slate-100 dark:border-slate-700 pb-3">
+                        <span class="w-8 h-8 rounded-lg bg-blue-600 text-white font-bold flex items-center justify-center text-xs shadow-md">05</span>
+                        <div>
+                            <h4 class="font-bold text-sm md:text-base">Stemming</h4>
+                            <p class="text-[11px] md:text-xs text-slate-400 mt-0.5">Mengubah kata berimbuhan menjadi bentuk dasar yang utuh.</p>
+                        </div>
+                    </div>
+                    ${data.stemMap.length > 0 ? `
+                        <div class="overflow-x-auto border border-slate-100 dark:border-slate-700 rounded-xl">
+                            <table class="w-full text-xs md:text-sm text-left">
+                                <thead class="bg-slate-50 dark:bg-slate-700/50">
+                                    <tr>
+                                        <th class="p-3 font-semibold text-slate-500 dark:text-slate-300">Kata Awal</th>
+                                        <th class="p-3 text-center w-10"></th>
+                                        <th class="p-3 font-semibold text-slate-500 dark:text-slate-300">Kata Dasar (Root)</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100 dark:divide-slate-700/50 font-mono">
+                                    ${data.stemMap.map(m => `
+                                        <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
+                                            <td class="p-3 text-slate-600 dark:text-slate-300 font-medium">${m.original}</td>
+                                            <td class="p-3 text-blue-500 text-center"><i class="fas fa-arrow-right text-[10px]"></i></td>
+                                            <td class="p-3 font-bold text-emerald-600 dark:text-emerald-400">${m.root}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    ` : '<p class="text-[11px] md:text-xs text-slate-400 italic bg-slate-50 dark:bg-slate-900 p-3 rounded-lg">Tidak ada perubahan imbuhan pada token yang tersisa (semua kata sudah berupa kata dasar).</p>'}
+                </div>
+            `;
+        }
+
+        // COPY TO CLIPBOARD
+        function copyToClipboard() {
+            const cleanedText = document.getElementById('outCleanedText').innerText;
+            document.execCommand('copy');
+            navigator.clipboard.writeText(cleanedText).then(() => {
+                showToast('Hasil teks bersih berhasil disalin ke clipboard!', 'success');
+            }).catch(() => {
+                showToast('Gagal menyalin teks.', 'error');
+            });
+        }
+
+        // RESET PREPROCESSING LAB
+        function resetPreprocessing() {
+            elInputText.value = '';
+            elFileInput.value = '';
+            elTextStats.innerText = '0 Karakter | 0 Kata';
+            clearLogTerminal();
+            document.getElementById('statsSummaryBar').classList.add('hidden');
+            document.getElementById('finalResultBox').classList.add('hidden');
+            elStepsDisplayContainer.innerHTML = '';
+            showToast('Form pre-processing berhasil direset.', 'success');
+        }
+
+        // HISTORY TABLE RENDER
+        function renderHistoryTable() {
+            const tbody = document.getElementById('historyTableBody');
+            tbody.innerHTML = '';
+
+            if (historyData.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-slate-400 italic">Belum ada riwayat dataset. Silakan proses teks di tab Pre-processing.</td></tr>`;
+                return;
+            }
+
+            historyData.forEach((item, index) => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 dark:hover:bg-slate-700/30 transition border-b border-slate-50 dark:border-slate-800/50";
+                tr.innerHTML = `
+                    <td class="p-4 text-slate-400 font-mono text-[11px] md:text-xs text-center">${index + 1}</td>
+                    <td class="p-4 font-mono text-[11px] md:text-xs text-slate-500 whitespace-nowrap">${item.time}</td>
+                    <td class="p-4 max-w-[120px] sm:max-w-xs truncate text-xs text-slate-600 dark:text-slate-300">${item.original}</td>
+                    <td class="p-4 max-w-[120px] sm:max-w-xs truncate text-xs font-semibold text-blue-600 dark:text-blue-400">${item.cleanedText}</td>
+                    <td class="p-4 text-center font-mono text-[11px] md:text-xs"><span class="px-2 py-1 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 rounded-md font-bold shadow-sm">${item.tokensCount}</span></td>
+                    <td class="p-4 text-center">
+                        <div class="flex items-center justify-center gap-1 md:gap-1.5">
+                            <button onclick="viewDetail(${item.id})" class="text-[10px] md:text-xs bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-800 px-2 md:px-2.5 py-1.5 rounded-lg transition font-medium" title="Detail">
+                                <i class="fas fa-eye"></i><span class="hidden md:inline ml-1">Lihat</span>
+                            </button>
+                            <button onclick="loadToPreprocess(${item.id})" class="text-[10px] md:text-xs bg-amber-50 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-800 px-2 md:px-2.5 py-1.5 rounded-lg transition font-medium" title="Muat">
+                                <i class="fas fa-redo"></i><span class="hidden md:inline ml-1">Muat</span>
+                            </button>
+                            <button onclick="deleteHistoryItem(${item.id})" class="text-[10px] md:text-xs bg-red-50 dark:bg-red-900/30 text-red-500 hover:bg-red-100 dark:hover:bg-red-800 px-2 py-1.5 rounded-lg transition" title="Hapus">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // LIHAT DETAIL MODAL
+        function viewDetail(id) {
+            const item = historyData.find(d => d.id === id);
+            if (!item) return;
+
+            const modalContent = document.getElementById('modalContent');
+            modalContent.innerHTML = `
+                <div>
+                    <span class="font-bold text-slate-400 uppercase text-[10px] md:text-xs block mb-1.5 tracking-wider">TEKS ASLI (RAW TEXT)</span>
+                    <p class="p-3 md:p-4 bg-slate-50 dark:bg-slate-900 rounded-xl font-mono text-slate-700 dark:text-slate-300 leading-relaxed border border-slate-100 dark:border-slate-800 break-words">${item.original}</p>
+                </div>
+                <div>
+                    <span class="font-bold text-blue-500 uppercase text-[10px] md:text-xs block mb-1.5 tracking-wider">HASIL CASE FOLDING & CLEANING</span>
+                    <p class="p-3 md:p-4 bg-slate-50 dark:bg-slate-900 rounded-xl font-mono text-blue-900 dark:text-blue-200 leading-relaxed border border-slate-100 dark:border-slate-800 break-words">${item.cleaned}</p>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
+                    <div class="p-3 md:p-4 bg-red-50/50 dark:bg-red-900/20 rounded-xl border border-red-100 dark:border-red-900/30">
+                        <span class="font-bold text-red-500 uppercase text-[10px] block mb-2 tracking-wider">STOPWORD DIHAPUS</span>
+                        <div class="flex flex-wrap gap-1">
+                            ${item.stopwordsRemoved && item.stopwordsRemoved.length > 0 ? item.stopwordsRemoved.map(s => `<span class="line-through text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/40 px-1.5 py-0.5 rounded text-[10px] font-mono">[${s}]</span>`).join('') : '<span class="text-slate-400 italic text-[11px]">-</span>'}
+                        </div>
+                    </div>
+                    <div class="p-3 md:p-4 bg-emerald-50/50 dark:bg-emerald-900/20 rounded-xl border border-emerald-100 dark:border-emerald-900/30">
+                        <span class="font-bold text-emerald-500 uppercase text-[10px] block mb-2 tracking-wider">JUMLAH TOKEN FINAL</span>
+                        <p class="font-mono font-bold text-emerald-600 dark:text-emerald-400 text-lg md:text-xl">${item.tokensCount} <span class="text-xs font-normal text-emerald-500">Kata</span></p>
+                    </div>
+                </div>
+                <div>
+                    <span class="font-bold text-emerald-600 dark:text-emerald-500 uppercase text-[10px] md:text-xs block mb-1.5 tracking-wider">HASIL AKHIR (CLEANED & STEMMED)</span>
+                    <p class="p-3 md:p-4 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-800 dark:text-emerald-300 rounded-xl font-mono font-bold border border-emerald-200 dark:border-emerald-800/50 leading-relaxed break-words">${item.cleanedText}</p>
+                </div>
+                <div>
+                    <span class="font-bold text-slate-400 uppercase text-[10px] md:text-xs block mb-1.5 tracking-wider">DAFTAR TOKEN FINAL</span>
+                    <div class="flex flex-wrap gap-1.5">
+                        ${(item.finalTokens || item.cleanedText.split(' ')).map(t => `<span class="px-2 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded text-[10px] md:text-[11px] font-mono font-medium shadow-sm">[${t}]</span>`).join('')}
+                    </div>
+                </div>
+            `;
+            document.getElementById('detailModal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('detailModal').classList.add('hidden');
+        }
+
+        // MUAT KEMBALI KE PRE-PROCESSING
+        function loadToPreprocess(id) {
+            const item = historyData.find(d => d.id === id);
+            if (!item) return;
+            switchTab('preprocessing');
+            elInputText.value = item.original;
+            elInputText.dispatchEvent(new Event('input'));
+            showToast('Teks berhasil dimuat ke editor!', 'success');
+        }
+
+        // EXPORT DATASET
+        function exportDataset(format) {
+            if (historyData.length === 0) {
+                showToast("Belum ada data riwayat untuk diekspor!", "error");
+                return;
+            }
+
+            let dataStr = "";
+            let filename = `dataset_text_mining_${Date.now()}`;
+
+            if (format === 'json') {
+                dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(historyData, null, 2));
+                filename += ".json";
+            } else if (format === 'csv') {
+                let csvContent = "No,Waktu,Teks_Mentah,Hasil_Cleaned_Stemmed,Total_Token\n";
+                historyData.forEach((item, index) => {
+                    const cleanOrig = `"${item.original.replace(/"/g, '""')}"`;
+                    const cleanRes = `"${item.cleanedText.replace(/"/g, '""')}"`;
+                    csvContent += `${index + 1},"${item.time}",${cleanOrig},${cleanRes},${item.tokensCount}\n`;
+                });
+                dataStr = "data:text/csv;charset=utf-8," + encodeURIComponent(csvContent);
+                filename += ".csv";
+            }
+
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", filename);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+            showToast(`Dataset berhasil diekspor sebagai ${format.toUpperCase()}`, 'success');
+        }
+
+        function deleteHistoryItem(id) {
+            showConfirm("Anda yakin ingin menghapus data ini dari riwayat?", () => {
+                historyData = historyData.filter(item => item.id !== id);
+                localStorage.setItem('textMiningHistory', JSON.stringify(historyData));
+                renderHistoryTable();
+                updateDashboardStats();
+                showToast("Data berhasil dihapus.", "success");
+            });
+        }
+
+        function clearHistoryTable() {
+            if(historyData.length === 0) {
+                showToast("Riwayat sudah kosong.", "error");
+                return;
+            }
+            showConfirm('Peringatan: Tindakan ini akan menghapus semua riwayat pemrosesan teks. Lanjutkan?', () => {
+                historyData = [];
+                localStorage.removeItem('textMiningHistory');
+                renderHistoryTable();
+                updateDashboardStats();
+                showToast("Semua riwayat berhasil dibersihkan.", "success");
+            });
+        }
+
+        // CUSTOM TOAST & CONFIRM MODALS
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            const bgColor = type === 'success' ? 'bg-emerald-600' : 'bg-red-600';
+            const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+            
+            toast.className = `fixed bottom-5 right-5 ${bgColor} text-white px-5 py-3.5 rounded-xl shadow-2xl flex items-center gap-3 fade-in z-[60] transition-opacity duration-300 font-medium text-sm`;
+            toast.innerHTML = `<i class="fas ${icon} text-lg"></i> <span>${message}</span>`;
+            
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        function showConfirm(message, onConfirm) {
+            const overlay = document.createElement('div');
+            overlay.className = "fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[70] flex items-center justify-center p-4 fade-in";
+            overlay.innerHTML = `
+                <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 md:p-8 max-w-sm w-full shadow-2xl border border-slate-200 dark:border-slate-700 text-center">
+                    <div class="w-16 h-16 bg-red-100 dark:bg-red-900/40 text-red-500 rounded-full flex items-center justify-center text-2xl mx-auto mb-4">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <h4 class="font-bold text-lg md:text-xl mb-2 text-slate-800 dark:text-white">Konfirmasi</h4>
+                    <p class="text-sm md:text-base text-slate-500 dark:text-slate-400 mb-6">${message}</p>
+                    <div class="flex flex-col sm:flex-row justify-center gap-3">
+                        <button class="cancel-btn px-5 py-2.5 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-xl font-medium text-sm transition text-slate-700 dark:text-slate-200 w-full sm:w-auto">Batal</button>
+                        <button class="confirm-btn px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium text-sm transition shadow-md shadow-red-500/20 w-full sm:w-auto">Ya, Hapus</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+            
+            overlay.querySelector('.cancel-btn').onclick = () => overlay.remove();
+            overlay.querySelector('.confirm-btn').onclick = () => {
+                onConfirm();
+                overlay.remove();
+            };
+        }
+
+        // CHARTS & DASHBOARD UPDATE REAL-TIME
+        function updateDashboardStats() {
+            // Update Base Counters dari Data LocalStorage (History Data)
+            let totalTokens = 0;
+            let totalStopwords = 0;
+            let totalTime = 0;
+
+            historyData.forEach(item => {
+                totalTokens += (item.finalTokens ? item.finalTokens.length : 0);
+                totalStopwords += (item.stopwordsRemoved ? item.stopwordsRemoved.length : 0);
+                totalTime += parseFloat(item.execTime || 0);
+            });
+
+            // Calculate Average Time
+            let avgTime = historyData.length > 0 ? (totalTime / historyData.length).toFixed(3) : "0.00";
+
+            document.getElementById('dashTotalProcessed').innerText = historyData.length.toLocaleString();
+            document.getElementById('dashTotalTokens').innerText = totalTokens.toLocaleString();
+            document.getElementById('dashTotalStopwords').innerText = totalStopwords.toLocaleString();
+            document.getElementById('dashAvgTime').innerText = avgTime + "s";
+
+            updateChartsRealtime();
+        }
+
+        function updateChartsRealtime() {
+            // Destroy existing charts to prevent overlap
+            if (visitChartInstance) visitChartInstance.destroy();
+            if (ratioChartInstance) ratioChartInstance.destroy();
+
+            // Calculate Token Metrics from real history
+            let totalTokens = 0, totalStopwords = 0, totalStemmed = 0;
+            historyData.forEach(item => {
+                totalTokens += (item.rawTokens ? item.rawTokens.length : 0);
+                totalStopwords += (item.stopwordsRemoved ? item.stopwordsRemoved.length : 0);
+                totalStemmed += (item.finalTokens ? item.finalTokens.length : 0);
+            });
+
+            // Fallback for visual structure if history is completely empty
+            if (totalTokens === 0) { 
+                totalTokens = 100; totalStopwords = 30; totalStemmed = 70; 
+            }
+
+            // Ratio Chart (Doughnut)
+            const ctxRatio = document.getElementById('ratioChart').getContext('2d');
+            ratioChartInstance = new Chart(ctxRatio, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Total Kata Utuh', 'Stopwords (Dihapus)', 'Kata Dasar (Sisa)'],
+                    datasets: [{
+                        data: [totalTokens, totalStopwords, totalStemmed],
+                        backgroundColor: ['#3b82f6', '#ef4444', '#10b981'],
+                        borderWidth: 0,
+                        hoverOffset: 4
+                    }]
+                },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } }
+                    },
+                    cutout: '70%'
+                }
+            });
+
+            // Trend Chart (Line) based on historical data processing lengths
+            const ctxVisit = document.getElementById('visitChart').getContext('2d');
+            
+            // Generate dynamic trend based on last 7 processing counts
+            let recentData = historyData.slice(0, 7).map(item => item.tokensCount).reverse();
+            let labelDays = ['Aksi 1', 'Aksi 2', 'Aksi 3', 'Aksi 4', 'Aksi 5', 'Aksi 6', 'Aksi 7'];
+            
+            if(recentData.length === 0) {
+                recentData = [12, 19, 3, 5, 2, 3, 10]; // dummy placeholder line if empty
+            }
+
+            visitChartInstance = new Chart(ctxVisit, {
+                type: 'line',
+                data: {
+                    labels: labelDays.slice(0, recentData.length),
+                    datasets: [{
+                        label: 'Token Dihasilkan per Aksi',
+                        data: recentData,
+                        borderColor: '#2563eb',
+                        backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        borderWidth: 2,
+                        pointRadius: 4,
+                        pointBackgroundColor: '#2563eb'
+                    }]
+                },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, grid: { display: true, color: 'rgba(156, 163, 175, 0.1)' } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        // THEME TOGGLE
+        document.getElementById('themeToggle').addEventListener('click', () => {
+            document.documentElement.classList.toggle('dark');
+        });
+
+        // INIT SETUP (ON PAGE LOAD)
+        window.addEventListener('DOMContentLoaded', () => {
+            // Pemanggilan kalkulasi dan render saat pertama kali dimuat
+            updateDashboardStats();
+            renderHistoryTable();
+        });
+    </script>
+</body>
+</html>
